@@ -1,0 +1,65 @@
+<div class="rpsls-game" data-game-target="rpslsBoard">
+  <% player_key = current_player == game.player1 ? 'player1_choice' : 'player2_choice' %>
+  <% my_choice = game.state[player_key] %>
+  <% opponent_key = current_player == game.player1 ? 'player2_choice' : 'player1_choice' %>
+  <% opponent_choice = game.state[opponent_key] %>
+
+  <% if game.playing? && my_choice.nil? %>
+    <p class="rpsls-prompt">Выберите свой ход:</p>
+    <div class="rpsls-choices">
+      <% RpslsService::CHOICES.each do |choice| %>
+        <button class="rpsls-btn" 
+                data-choice="<%= choice %>"
+                data-action="click->game#makeRpslsMove">
+          <span class="choice-icon">
+            <% case choice %>
+            <% when 'rock' %>✊
+            <% when 'paper' %>✋
+            <% when 'scissors' %>✌️
+            <% when 'lizard' %>🦎
+            <% when 'spock' %>🖖
+            <% end %>
+          </span>
+          <span class="choice-name"><%= RpslsService::CHOICE_NAMES[choice] %></span>
+        </button>
+      <% end %>
+    </div>
+  <% elsif my_choice && !opponent_choice %>
+    <div class="rpsls-waiting">
+      <p>Вы выбрали: <strong><%= RpslsService::CHOICE_NAMES[my_choice] %></strong></p>
+      <p>⏳ Ожидание выбора противника...</p>
+    </div>
+  <% elsif game.finished? %>
+    <div class="rpsls-result">
+      <div class="choices-reveal">
+        <div class="choice-reveal">
+          <span class="player-label"><%= game.player1.username %></span>
+          <span class="choice-big">
+            <% case game.state['player1_choice'] %>
+            <% when 'rock' %>✊
+            <% when 'paper' %>✋
+            <% when 'scissors' %>✌️
+            <% when 'lizard' %>🦎
+            <% when 'spock' %>🖖
+            <% end %>
+          </span>
+          <span class="choice-name"><%= RpslsService::CHOICE_NAMES[game.state['player1_choice']] %></span>
+        </div>
+        <div class="vs-big">VS</div>
+        <div class="choice-reveal">
+          <span class="player-label"><%= game.player2.username %></span>
+          <span class="choice-big">
+            <% case game.state['player2_choice'] %>
+            <% when 'rock' %>✊
+            <% when 'paper' %>✋
+            <% when 'scissors' %>✌️
+            <% when 'lizard' %>🦎
+            <% when 'spock' %>🖖
+            <% end %>
+          </span>
+          <span class="choice-name"><%= RpslsService::CHOICE_NAMES[game.state['player2_choice']] %></span>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>

@@ -1,0 +1,73 @@
+<% content_for(:title) { "Статистика #{@player.username}" } %>
+
+<div class="page-container">
+  <header class="page-header">
+    <h1>📊 Статистика: <%= @player.username %></h1>
+    <%= link_to "← Таблица лидеров", statistics_path, class: "back-link" %>
+  </header>
+
+  <div class="player-stats-card">
+    <div class="stats-grid">
+      <div class="stat-item">
+        <span class="stat-value wins"><%= @player.wins_count %></span>
+        <span class="stat-label">Победы</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-value losses"><%= @player.losses_count %></span>
+        <span class="stat-label">Поражения</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-value draws"><%= @player.draws_count %></span>
+        <span class="stat-label">Ничьи</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-value"><%= @player.total_games %></span>
+        <span class="stat-label">Всего игр</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-value winrate"><%= @player.win_rate %>%</span>
+        <span class="stat-label">Винрейт</span>
+      </div>
+    </div>
+  </div>
+
+  <h2>Последние игры</h2>
+  <div class="games-history">
+    <% if @games.empty? %>
+      <p class="no-games">Нет завершённых игр.</p>
+    <% else %>
+      <table class="games-table">
+        <thead>
+          <tr>
+            <th>Игра</th>
+            <th>Противник</th>
+            <th>Результат</th>
+            <th>Дата</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @games.each do |game| %>
+            <tr>
+              <td><%= game.game_type_name %></td>
+              <td><%= game.opponent(@player)&.username || "—" %></td>
+              <td>
+                <% if game.draw? %>
+                  <span class="result-draw">Ничья</span>
+                <% elsif game.winner == @player %>
+                  <span class="result-win">Победа</span>
+                <% else %>
+                  <span class="result-loss">Поражение</span>
+                <% end %>
+              </td>
+              <td><%= game.finished_at&.strftime("%d.%m.%Y %H:%M") %></td>
+              <td>
+                <%= link_to "История", game_history_path(game), class: "btn btn-sm btn-outline" %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% end %>
+  </div>
+</div>

@@ -1,0 +1,65 @@
+<% content_for(:title) { "Лобби" } %>
+
+<div class="lobby-container">
+  <header class="lobby-header">
+    <h1>🎮 Hamster Games</h1>
+    <nav class="lobby-nav">
+      <%= link_to "Мои игры", games_path, class: "nav-link" %>
+      <%= link_to "Статистика", statistics_path, class: "nav-link" %>
+      <span class="player-info">👤 <%= current_player.username %></span>
+      <%= button_to "Выйти", logout_path, method: :delete, class: "btn btn-outline" %>
+    </nav>
+  </header>
+
+  <main class="lobby-main">
+    <section class="create-game">
+      <h2>Создать игру</h2>
+      <div class="game-type-cards">
+        <% @game_types.each do |game_type| %>
+          <%= form_with url: games_path, local: true, class: "game-type-form" do |f| %>
+            <%= f.hidden_field :game_type, value: game_type %>
+            <button type="submit" class="game-type-card" data-game-type="<%= game_type %>">
+              <span class="game-icon">
+                <% case game_type %>
+                <% when 'tic_tac_toe' %>❌⭕
+                <% when 'rpsls' %>✊✋✌️
+                <% when 'battleship' %>🚢💥
+                <% end %>
+              </span>
+              <span class="game-name">
+                <% case game_type %>
+                <% when 'tic_tac_toe' %>Крестики-нолики
+                <% when 'rpsls' %>Камень-ножницы-бумага-ящерица-Спок
+                <% when 'battleship' %>Морской бой
+                <% end %>
+              </span>
+            </button>
+          <% end %>
+        <% end %>
+      </div>
+    </section>
+
+    <section class="waiting-games" data-controller="lobby">
+      <h2>Ожидающие игры</h2>
+      <div class="games-list" data-lobby-target="gamesList">
+        <% if @games.empty? %>
+          <p class="no-games">Нет ожидающих игр. Создайте свою!</p>
+        <% else %>
+          <% @games.each do |game| %>
+            <div class="game-item" data-game-id="<%= game.id %>">
+              <div class="game-info">
+                <span class="game-type-badge"><%= game.game_type_name %></span>
+                <span class="game-host">Хост: <%= game.player1.username %></span>
+              </div>
+              <% unless game.player1 == current_player %>
+                <%= link_to "Присоединиться", join_game_path(game), method: :post, class: "btn btn-primary" %>
+              <% else %>
+                <span class="waiting-badge">Ожидание...</span>
+              <% end %>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+    </section>
+  </main>
+</div>

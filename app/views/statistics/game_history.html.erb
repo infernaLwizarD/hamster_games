@@ -1,0 +1,53 @@
+<% content_for(:title) { "История игры" } %>
+
+<div class="page-container">
+  <header class="page-header">
+    <h1>📜 История игры: <%= @game.game_type_name %></h1>
+    <%= link_to "← Назад", :back, class: "back-link" %>
+  </header>
+
+  <div class="game-summary">
+    <div class="game-players">
+      <div class="player <%= 'winner' if @game.winner == @game.player1 %>">
+        <span class="player-name"><%= @game.player1.username %></span>
+        <% if @game.winner == @game.player1 %>🏆<% end %>
+      </div>
+      <span class="vs">VS</span>
+      <div class="player <%= 'winner' if @game.winner == @game.player2 %>">
+        <span class="player-name"><%= @game.player2&.username || "—" %></span>
+        <% if @game.winner == @game.player2 %>🏆<% end %>
+      </div>
+    </div>
+
+    <div class="game-result">
+      <% if @game.draw? %>
+        <span class="result-draw">Ничья</span>
+      <% elsif @game.winner %>
+        <span class="result-winner">Победитель: <%= @game.winner.username %></span>
+      <% end %>
+    </div>
+
+    <div class="game-dates">
+      <p>Начало: <%= @game.started_at&.strftime("%d.%m.%Y %H:%M:%S") %></p>
+      <p>Окончание: <%= @game.finished_at&.strftime("%d.%m.%Y %H:%M:%S") %></p>
+    </div>
+  </div>
+
+  <h2>Ходы</h2>
+  <div class="moves-history">
+    <% if @moves.empty? %>
+      <p class="no-moves">Нет записанных ходов.</p>
+    <% else %>
+      <ol class="moves-list-detailed">
+        <% @moves.each do |move| %>
+          <li class="move-item">
+            <span class="move-number">#<%= move.move_number %></span>
+            <span class="move-player"><%= move.player.username %></span>
+            <span class="move-description"><%= move.description %></span>
+            <span class="move-time"><%= move.created_at.strftime("%H:%M:%S") %></span>
+          </li>
+        <% end %>
+      </ol>
+    <% end %>
+  </div>
+</div>

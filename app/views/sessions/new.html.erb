@@ -1,0 +1,28 @@
+<% content_for(:title) { "Вход" } %>
+
+<div class="auth-container">
+  <div class="auth-card">
+    <h1>🎮 Hamster Games</h1>
+    <h2>Вход в систему</h2>
+
+    <%= form_with url: login_path, local: true, class: "auth-form" do |f| %>
+      <div class="form-group">
+        <%= f.label :username, "Имя пользователя" %>
+        <%= f.text_field :username, required: true, autofocus: true, class: "form-control" %>
+      </div>
+
+      <div class="form-group">
+        <%= f.label :password, "Пароль" %>
+        <%= f.password_field :password, required: true, class: "form-control" %>
+      </div>
+
+      <div class="form-actions">
+        <%= f.submit "Войти", class: "btn btn-primary" %>
+      </div>
+    <% end %>
+
+    <div class="auth-links">
+      <p>Нет аккаунта? <%= link_to "Зарегистрироваться", register_path %></p>
+    </div>
+  </div>
+</div>

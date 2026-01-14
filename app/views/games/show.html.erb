@@ -1,0 +1,74 @@
+<% content_for(:title) { @game.game_type_name } %>
+
+<div class="game-container" data-controller="game" data-game-id="<%= @game.id %>" data-game-type="<%= @game.game_type %>" data-player-id="<%= current_player.id %>" data-current-turn-id="<%= @game.current_turn_id %>">
+  <header class="game-header">
+    <h1><%= @game.game_type_name %></h1>
+    <%= link_to "← Лобби", lobby_path, class: "back-link" %>
+  </header>
+
+  <div class="game-info-bar">
+    <div class="player-info player1 <%= 'current-turn' if @game.current_turn_id == @game.player1_id %>">
+      <span class="player-symbol">
+        <% if @game.game_type == 'tic_tac_toe' %>❌<% else %>🔵<% end %>
+      </span>
+      <span class="player-name"><%= @game.player1.username %></span>
+      <% if @game.player1 == current_player %>
+        <span class="you-badge">(Вы)</span>
+      <% end %>
+    </div>
+    <div class="vs">VS</div>
+    <div class="player-info player2 <%= 'current-turn' if @game.current_turn_id == @game.player2_id %>">
+      <% if @game.player2 %>
+        <span class="player-symbol">
+          <% if @game.game_type == 'tic_tac_toe' %>⭕<% else %>🔴<% end %>
+        </span>
+        <span class="player-name"><%= @game.player2.username %></span>
+        <% if @game.player2 == current_player %>
+          <span class="you-badge">(Вы)</span>
+        <% end %>
+      <% else %>
+        <span class="waiting-opponent">Ожидание противника...</span>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="game-status" data-game-target="status">
+    <% if @game.waiting? %>
+      <p class="status-waiting">⏳ Ожидание второго игрока...</p>
+    <% elsif @game.playing? %>
+      <% if @game.current_turn == current_player %>
+        <p class="status-your-turn">🎯 Ваш ход!</p>
+      <% else %>
+        <p class="status-opponent-turn">⏳ Ход противника...</p>
+      <% end %>
+    <% elsif @game.finished? %>
+      <% if @game.draw? %>
+        <p class="status-draw">🤝 Ничья!</p>
+      <% elsif @game.winner == current_player %>
+        <p class="status-win">🎉 Вы победили!</p>
+      <% else %>
+        <p class="status-loss">😔 Вы проиграли</p>
+      <% end %>
+    <% end %>
+  </div>
+
+  <div class="game-board" data-game-target="board">
+    <% case @game.game_type %>
+    <% when 'tic_tac_toe' %>
+      <%= render 'games/tic_tac_toe', game: @game, current_player: current_player %>
+    <% when 'rpsls' %>
+      <%= render 'games/rpsls', game: @game, current_player: current_player %>
+    <% when 'battleship' %>
+      <%= render 'games/battleship', game: @game, current_player: current_player %>
+    <% end %>
+  </div>
+
+  <div class="game-moves" data-game-target="moves">
+    <h3>История ходов</h3>
+    <ul class="moves-list">
+      <% @game.game_moves.each do |move| %>
+        <li><%= move.description %></li>
+      <% end %>
+    </ul>
+  </div>
+</div>

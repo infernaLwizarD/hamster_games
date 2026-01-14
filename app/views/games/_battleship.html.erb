@@ -1,0 +1,125 @@
+<div class="battleship-game" data-game-target="battleshipBoard">
+  <% player_key = current_player == game.player1 ? 'player1' : 'player2' %>
+  <% opponent_key = current_player == game.player1 ? 'player2' : 'player1' %>
+  <% phase = game.state['phase'] %>
+  <% my_ready = game.state["#{player_key}_ready"] %>
+  <% my_board = game.state["#{player_key}_board"] || [] %>
+  <% my_shots = game.state["#{player_key}_shots"] || [] %>
+  <% my_ships = game.state["#{player_key}_ships"] || {} %>
+
+  <% if phase == 'placement' %>
+    <div class="battleship-placement">
+      <h3>Расстановка кораблей</h3>
+      <% unless my_ready %>
+        <div class="ship-selector" data-game-target="shipSelector">
+          <p>Выберите корабль для размещения:</p>
+          <% BattleshipService::SHIPS.each do |ship_type, length| %>
+            <% placed = my_ships.key?(ship_type) %>
+            <button class="ship-btn <%= 'placed' if placed %>" 
+                    data-ship-type="<%= ship_type %>" 
+                    data-ship-length="<%= length %>"
+                    data-action="click->game#selectShip"
+                    <%= 'disabled' if placed %>>
+              <%= ship_type.capitalize %> (<%= length %> клеток)
+              <% if placed %>✓<% end %>
+            </button>
+          <% end %>
+        </div>
+        <div class="placement-controls">
+          <button class="btn btn-outline" data-action="click->game#rotateShip">Повернуть (H/V)</button>
+          <% if my_ships.keys.sort == BattleshipService::SHIPS.keys.sort %>
+            <button class="btn btn-primary" data-action="click->game#markReady">Готов к бою!</button>
+          <% end %>
+        </div>
+      <% else %>
+        <p class="ready-status">✅ Вы готовы! Ожидание противника...</p>
+      <% end %>
+
+      <div class="my-board-container">
+        <h4>Ваше поле</h4>
+        <div class="battleship-board my-board">
+          <div class="board-header">
+            <div class="corner"></div>
+            <% ('A'..'J').each do |col| %>
+              <div class="col-label"><%= col %></div>
+            <% end %>
+          </div>
+          <% 10.times do |row| %>
+            <div class="board-row">
+              <div class="row-label"><%= row + 1 %></div>
+              <% 10.times do |col| %>
+                <% cell = my_board[row]&.at(col) %>
+                <div class="board-cell <%= 'has-ship' if cell %>" 
+                     data-row="<%= row %>" 
+                     data-col="<%= col %>"
+                     data-action="click->game#placeShipCell">
+                  <% if cell %><span class="ship-marker">🚢</span><% end %>
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  <% elsif phase == 'battle' %>
+    <div class="battleship-battle">
+      <div class="boards-container">
+        <div class="board-section">
+          <h4>Ваше поле</h4>
+          <div class="battleship-board my-board">
+            <div class="board-header">
+              <div class="corner"></div>
+              <% ('A'..'J').each do |col| %>
+                <div class="col-label"><%= col %></div>
+              <% end %>
+            </div>
+            <% opponent_shots = game.state["#{opponent_key}_shots"] || [] %>
+            <% 10.times do |row| %>
+              <div class="board-row">
+                <div class="row-label"><%= row + 1 %></div>
+                <% 10.times do |col| %>
+                  <% cell = my_board[row]&.at(col) %>
+                  <% shot = opponent_shots[row]&.at(col) %>
+                  <div class="board-cell <%= 'has-ship' if cell %> <%= shot %>">
+                    <% if shot == 'hit' %>💥
+                    <% elsif shot == 'miss' %>💨
+                    <% elsif cell %>🚢
+                    <% end %>
+                  </div>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+        </div>
+
+        <div class="board-section">
+          <h4>Поле противника</h4>
+          <div class="battleship-board enemy-board">
+            <div class="board-header">
+              <div class="corner"></div>
+              <% ('A'..'J').each do |col| %>
+                <div class="col-label"><%= col %></div>
+              <% end %>
+            </div>
+            <% 10.times do |row| %>
+              <div class="board-row">
+                <div class="row-label"><%= row + 1 %></div>
+                <% 10.times do |col| %>
+                  <% shot = my_shots[row]&.at(col) %>
+                  <div class="board-cell <%= shot %> <%= 'clickable' if game.playing? && game.current_turn == current_player && !shot %>" 
+                       data-row="<%= row %>" 
+                       data-col="<%= col %>"
+                       data-action="click->game#shootCell">
+                    <% if shot == 'hit' %>💥
+                    <% elsif shot == 'miss' %>💨
+                    <% end %>
+                  </div>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>

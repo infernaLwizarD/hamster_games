@@ -1,0 +1,15 @@
+<div class="tic-tac-toe-board" data-game-target="ticTacToeBoard">
+  <% board = game.state['board'] || Array.new(9, nil) %>
+  <% board.each_with_index do |cell, index| %>
+    <button class="ttt-cell <%= 'filled' if cell %>" 
+            data-position="<%= index %>"
+            data-action="click->game#makeTicTacToeMove"
+            <%= 'disabled' if cell || !game.playing? || game.current_turn != current_player %>>
+      <% if cell == 'X' %>
+        <span class="symbol-x">❌</span>
+      <% elsif cell == 'O' %>
+        <span class="symbol-o">⭕</span>
+      <% end %>
+    </button>
+  <% end %>
+</div>

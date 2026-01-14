@@ -1,0 +1,43 @@
+<% content_for(:title) { "Регистрация" } %>
+
+<div class="auth-container">
+  <div class="auth-card">
+    <h1>🎮 Hamster Games</h1>
+    <h2>Регистрация</h2>
+
+    <%= form_with model: @player, url: register_path, local: true, class: "auth-form" do |f| %>
+      <% if @player.errors.any? %>
+        <div class="error-messages">
+          <ul>
+            <% @player.errors.full_messages.each do |msg| %>
+              <li><%= msg %></li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+
+      <div class="form-group">
+        <%= f.label :username, "Имя пользователя" %>
+        <%= f.text_field :username, required: true, autofocus: true, class: "form-control" %>
+      </div>
+
+      <div class="form-group">
+        <%= f.label :password, "Пароль" %>
+        <%= f.password_field :password, required: true, class: "form-control" %>
+      </div>
+
+      <div class="form-group">
+        <%= f.label :password_confirmation, "Подтверждение пароля" %>
+        <%= f.password_field :password_confirmation, required: true, class: "form-control" %>
+      </div>
+
+      <div class="form-actions">
+        <%= f.submit "Зарегистрироваться", class: "btn btn-primary" %>
+      </div>
+    <% end %>
+
+    <div class="auth-links">
+      <p>Уже есть аккаунт? <%= link_to "Войти", login_path %></p>
+    </div>
+  </div>
+</div>

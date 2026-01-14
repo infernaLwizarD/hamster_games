@@ -1,0 +1,65 @@
+<% content_for(:title) { "Мои игры" } %>
+
+<div class="page-container">
+  <header class="page-header">
+    <h1>Мои игры</h1>
+    <%= link_to "← Лобби", lobby_path, class: "back-link" %>
+  </header>
+
+  <div class="games-history">
+    <% if @games.empty? %>
+      <p class="no-games">Вы ещё не играли ни в одну игру.</p>
+    <% else %>
+      <table class="games-table">
+        <thead>
+          <tr>
+            <th>Игра</th>
+            <th>Противник</th>
+            <th>Статус</th>
+            <th>Результат</th>
+            <th>Дата</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @games.each do |game| %>
+            <tr>
+              <td><%= game.game_type_name %></td>
+              <td><%= game.opponent(current_player)&.username || "Ожидание" %></td>
+              <td>
+                <span class="status-badge status-<%= game.status %>">
+                  <% case game.status %>
+                  <% when 'waiting' %>Ожидание
+                  <% when 'playing' %>В процессе
+                  <% when 'finished' %>Завершена
+                  <% end %>
+                </span>
+              </td>
+              <td>
+                <% if game.finished? %>
+                  <% if game.draw? %>
+                    <span class="result-draw">Ничья</span>
+                  <% elsif game.winner == current_player %>
+                    <span class="result-win">Победа</span>
+                  <% else %>
+                    <span class="result-loss">Поражение</span>
+                  <% end %>
+                <% else %>
+                  —
+                <% end %>
+              </td>
+              <td><%= game.created_at.strftime("%d.%m.%Y %H:%M") %></td>
+              <td>
+                <% if game.playing? || game.waiting? %>
+                  <%= link_to "Играть", game_path(game), class: "btn btn-sm btn-primary" %>
+                <% else %>
+                  <%= link_to "История", game_history_path(game), class: "btn btn-sm btn-outline" %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% end %>
+  </div>
+</div>
