@@ -1,6 +1,6 @@
 class GameMove < ApplicationRecord
   belongs_to :game
-  belongs_to :player
+  belongs_to :player, optional: true
 
   validates :move_number, presence: true, numericality: { greater_than: 0 }
 
