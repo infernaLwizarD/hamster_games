@@ -13,7 +13,48 @@
 
   <main class="lobby-main">
     <section class="create-game">
-      <h2>Создать игру</h2>
+      <h2>🤖 Играть с ботом</h2>
+      <div class="bot-games">
+        <% @game_types.each do |game_type| %>
+          <div class="bot-game-card">
+            <div class="bot-game-header">
+              <span class="game-icon">
+                <%= case game_type
+                    when 'tic_tac_toe' then '❌⭕'
+                    when 'rpsls' then '✊✋✌️'
+                    when 'battleship' then '🚢💥'
+                    end %>
+              </span>
+              <span class="game-name">
+                <%= case game_type
+                    when 'tic_tac_toe' then 'Крестики-нолики'
+                    when 'rpsls' then 'Камень-ножницы-бумага-ящерица-Спок'
+                    when 'battleship' then 'Морской бой'
+                    end %>
+              </span>
+            </div>
+            <div class="difficulty-buttons">
+              <% Game::BOT_DIFFICULTIES.each do |difficulty| %>
+                <%= form_with model: Game.new, url: games_path, local: true, class: "bot-form" do |f| %>
+                  <%= f.hidden_field :game_type, value: game_type %>
+                  <%= f.hidden_field :bot_difficulty, value: difficulty %>
+                  <button type="submit" class="difficulty-btn difficulty-<%= difficulty %>">
+                    <%= case difficulty
+                        when 'easy' then '😊 Лёгкий'
+                        when 'medium' then '🤔 Средний'
+                        when 'hard' then '😈 Сложный'
+                        end %>
+                  </button>
+                <% end %>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </section>
+
+    <section class="create-game">
+      <h2>👥 Играть с игроком</h2>
       <div class="game-type-cards">
         <% @game_types.each do |game_type| %>
           <%= form_with model: Game.new, url: games_path, local: true, class: "game-type-form" do |f| %>

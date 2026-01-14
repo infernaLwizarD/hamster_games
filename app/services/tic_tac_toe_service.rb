@@ -9,35 +9,38 @@ class TicTacToeService < GameService
     @game.update!(state: { 'board' => Array.new(9, nil) })
   end
 
-  def make_move(player, move_data)
+  def make_move(player, move_data, bot: false)
     position = move_data['position'].to_i
 
-    unless valid_move?(player, move_data)
+    unless valid_move?(player, move_data, bot: bot)
       return { success: false, error: 'Недопустимый ход' }
     end
 
     board = @game.state['board'].dup
-    symbol = player == @game.player1 ? 'X' : 'O'
+    is_player1 = bot ? false : (player == @game.player1)
+    symbol = is_player1 ? 'X' : 'O'
     board[position] = symbol
 
     @game.update!(state: { 'board' => board })
 
-    move = create_move(player, move_data, "#{player.username} поставил #{symbol} на позицию #{position + 1}")
+    player_name = bot ? 'Бот' : player.username
+    move = create_move(player, move_data, "#{player_name} поставил #{symbol} на позицию #{position + 1}")
 
+    winner = bot ? nil : player
     if winner?(board, symbol)
-      @game.finish_game!(player)
+      @game.finish_game!(winner)
     elsif board_full?(board)
       @game.finish_game!(nil)
     else
-      switch_turn
+      switch_turn unless bot
     end
 
     { success: true, move: move }
   end
 
-  def valid_move?(player, move_data)
+  def valid_move?(player, move_data, bot: false)
     return false unless @game.playing?
-    return false unless @game.current_turn_id == player.id
+    return false if !bot && @game.current_turn_id != player&.id
 
     position = move_data['position'].to_i
     return false if position < 0 || position > 8

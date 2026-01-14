@@ -22,22 +22,22 @@ class BattleshipService < GameService
     })
   end
 
-  def make_move(player, move_data)
+  def make_move(player, move_data, bot: false)
     action = move_data['action']
 
     case action
     when 'place_ship'
-      place_ship(player, move_data)
+      place_ship(player, move_data, bot: bot)
     when 'ready'
-      mark_ready(player)
+      mark_ready(player, bot: bot)
     when 'shoot'
-      shoot(player, move_data)
+      shoot(player, move_data, bot: bot)
     else
       { success: false, error: 'Неизвестное действие' }
     end
   end
 
-  def valid_move?(player, move_data)
+  def valid_move?(player, move_data, bot: false)
     return false unless @game.playing?
     true
   end
@@ -48,9 +48,9 @@ class BattleshipService < GameService
     Array.new(BOARD_SIZE) { Array.new(BOARD_SIZE, nil) }
   end
 
-  def place_ship(player, move_data)
+  def place_ship(player, move_data, bot: false)
     state = @game.state.dup
-    player_key = player == @game.player1 ? 'player1' : 'player2'
+    player_key = bot ? 'player2' : (player == @game.player1 ? 'player1' : 'player2')
 
     ship_type = move_data['ship_type']
     start_row = move_data['row'].to_i
@@ -73,13 +73,14 @@ class BattleshipService < GameService
 
     @game.update!(state: state)
 
-    move = create_move(player, move_data, "#{player.username} разместил #{ship_type}")
+    player_name = bot ? 'Бот' : player.username
+    move = create_move(player, move_data, "#{player_name} разместил #{ship_type}")
     { success: true, move: move }
   end
 
-  def mark_ready(player)
+  def mark_ready(player, bot: false)
     state = @game.state.dup
-    player_key = player == @game.player1 ? 'player1' : 'player2'
+    player_key = bot ? 'player2' : (player == @game.player1 ? 'player1' : 'player2')
 
     ships_placed = state["#{player_key}_ships"].keys
     return { success: false, error: 'Разместите все корабли' } unless ships_placed.sort == SHIPS.keys.sort
@@ -92,17 +93,18 @@ class BattleshipService < GameService
       @game.update!(state: state, current_turn: @game.player1)
     end
 
-    move = create_move(player, { action: 'ready' }, "#{player.username} готов к бою")
+    player_name = bot ? 'Бот' : player.username
+    move = create_move(player, { action: 'ready' }, "#{player_name} готов к бою")
     { success: true, move: move }
   end
 
-  def shoot(player, move_data)
-    return { success: false, error: 'Не ваш ход' } unless @game.current_turn_id == player.id
+  def shoot(player, move_data, bot: false)
+    return { success: false, error: 'Не ваш ход' } if !bot && @game.current_turn_id != player&.id
     return { success: false, error: 'Игра не в фазе боя' } unless @game.state['phase'] == 'battle'
 
     state = @game.state.dup
-    player_key = player == @game.player1 ? 'player1' : 'player2'
-    opponent_key = player == @game.player1 ? 'player2' : 'player1'
+    player_key = bot ? 'player2' : (player == @game.player1 ? 'player1' : 'player2')
+    opponent_key = bot ? 'player1' : (player == @game.player1 ? 'player2' : 'player1')
 
     row = move_data['row'].to_i
     col = move_data['col'].to_i
@@ -118,24 +120,26 @@ class BattleshipService < GameService
     shots[row][col] = hit ? 'hit' : 'miss'
     state["#{player_key}_shots"] = shots
 
+    player_name = bot ? 'Бот' : player.username
     result_text = hit ? 'попал' : 'промахнулся'
-    move = create_move(player, move_data, "#{player.username} #{result_text} по #{('A'.ord + col).chr}#{row + 1}")
+    move = create_move(player, move_data, "#{player_name} #{result_text} по #{('A'.ord + col).chr}#{row + 1}")
 
     if hit
       ship_type = opponent_board[row][col]
       if ship_destroyed?(state, opponent_key, ship_type, shots)
-        move.update!(description: "#{player.username} потопил #{ship_type}!")
+        move.update!(description: "#{player_name} потопил #{ship_type}!")
       end
 
       if all_ships_destroyed?(state, opponent_key, shots)
         @game.update!(state: state)
-        @game.finish_game!(player)
+        winner = bot ? nil : player
+        @game.finish_game!(winner)
         return { success: true, move: move }
       end
     end
 
     @game.update!(state: state)
-    switch_turn unless hit
+    switch_turn unless hit || bot
 
     { success: true, move: move }
   end

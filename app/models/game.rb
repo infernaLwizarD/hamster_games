@@ -1,6 +1,7 @@
 class Game < ApplicationRecord
   GAME_TYPES = %w[tic_tac_toe rpsls battleship].freeze
   STATUSES = %w[waiting playing finished].freeze
+  BOT_DIFFICULTIES = %w[easy medium hard].freeze
 
   belongs_to :player1, class_name: 'Player'
   belongs_to :player2, class_name: 'Player', optional: true
@@ -10,8 +11,10 @@ class Game < ApplicationRecord
 
   validates :game_type, presence: true, inclusion: { in: GAME_TYPES }
   validates :status, inclusion: { in: STATUSES }
+  validates :bot_difficulty, inclusion: { in: BOT_DIFFICULTIES }, allow_nil: true
 
   scope :waiting, -> { where(status: 'waiting') }
+  scope :vs_humans, -> { where(bot_difficulty: nil) }
   scope :playing, -> { where(status: 'playing') }
   scope :finished, -> { where(status: 'finished') }
   scope :by_type, ->(type) { where(game_type: type) }
@@ -51,6 +54,18 @@ class Game < ApplicationRecord
 
   def draw?
     finished? && winner_id.nil?
+  end
+
+  def vs_bot?
+    bot_difficulty.present?
+  end
+
+  def bot_difficulty_name
+    case bot_difficulty
+    when 'easy' then 'Лёгкий'
+    when 'medium' then 'Средний'
+    when 'hard' then 'Сложный'
+    end
   end
 
   def start_game!

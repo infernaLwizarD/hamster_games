@@ -17,8 +17,12 @@
       <% end %>
     </div>
     <div class="vs">VS</div>
-    <div class="player-info player2 <%= 'current-turn' if @game.current_turn_id == @game.player2_id %>">
-      <% if @game.player2 %>
+    <div class="player-info player2 <%= 'current-turn' unless @game.current_turn_id == @game.player1_id %>">
+      <% if @game.vs_bot? %>
+        <span class="player-symbol">🤖</span>
+        <span class="player-name">Бот</span>
+        <span class="bot-badge"><%= @game.bot_difficulty_name %></span>
+      <% elsif @game.player2 %>
         <span class="player-symbol">
           <% if @game.game_type == 'tic_tac_toe' %>⭕<% else %>🔴<% end %>
         </span>

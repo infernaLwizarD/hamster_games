@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_15_000003) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_15_000004) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -28,6 +28,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_15_000003) do
   end
 
   create_table "games", force: :cascade do |t|
+    t.string "bot_difficulty"
     t.datetime "created_at", null: false
     t.bigint "current_turn_id"
     t.datetime "finished_at"
@@ -39,6 +40,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_15_000003) do
     t.string "status", default: "waiting"
     t.datetime "updated_at", null: false
     t.bigint "winner_id"
+    t.index ["bot_difficulty"], name: "index_games_on_bot_difficulty"
     t.index ["current_turn_id"], name: "index_games_on_current_turn_id"
     t.index ["game_type"], name: "index_games_on_game_type"
     t.index ["player1_id"], name: "index_games_on_player1_id"

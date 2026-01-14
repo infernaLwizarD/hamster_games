@@ -15,11 +15,24 @@ class GamesController < ApplicationController
   def create
     @game = Game.new(game_params)
     @game.player1 = current_player
-    @game.status = 'waiting'
+
+    if @game.vs_bot?
+      @game.status = 'playing'
+      @game.started_at = Time.current
+      @game.current_turn = current_player
+    else
+      @game.status = 'waiting'
+    end
 
     if @game.save
       GameService.for(@game).initialize_game
-      ActionCable.server.broadcast('lobby', { type: 'game_created', game: game_info(@game) })
+
+      if @game.vs_bot?
+        setup_bot_game(@game)
+      else
+        ActionCable.server.broadcast('lobby', { type: 'game_created', game: game_info(@game) })
+      end
+
       redirect_to game_path(@game)
     else
       redirect_to lobby_path, alert: 'Не удалось создать игру'
@@ -57,6 +70,8 @@ class GamesController < ApplicationController
           game: game_state(@game),
           winner_id: @game.winner_id
         })
+      elsif @game.vs_bot? && @game.playing?
+        make_bot_move(@game)
       end
 
       head :ok
@@ -72,7 +87,48 @@ class GamesController < ApplicationController
   end
 
   def game_params
-    params.require(:game).permit(:game_type)
+    params.require(:game).permit(:game_type, :bot_difficulty)
+  end
+
+  def setup_bot_game(game)
+    if game.game_type == 'battleship'
+      bot_service = BotService.for(game)
+      BattleshipService::SHIPS.keys.each do
+        move_data = bot_service.place_ships
+        break if move_data['action'] == 'ready'
+        GameService.for(game).make_move(nil, move_data, bot: true)
+        game.reload
+      end
+      GameService.for(game).make_move(nil, { 'action' => 'ready' }, bot: true)
+    end
+  end
+
+  def make_bot_move(game)
+    return unless game.vs_bot? && game.playing?
+
+    bot_service = BotService.for(game)
+    move_data = bot_service.make_move
+
+    return unless move_data
+
+    game_service = GameService.for(game)
+    result = game_service.make_move(nil, move_data, bot: true)
+
+    if result[:success]
+      GameChannel.broadcast_to(game, {
+        type: 'move_made',
+        game: game_state(game.reload),
+        move: move_info(result[:move])
+      })
+
+      if game.finished?
+        GameChannel.broadcast_to(game, {
+          type: 'game_finished',
+          game: game_state(game),
+          winner_id: game.winner_id
+        })
+      end
+    end
   end
 
   def move_params

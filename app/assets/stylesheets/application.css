@@ -955,6 +955,98 @@ a:hover {
   color: var(--danger-color);
 }
 
+/* Bot Games */
+.bot-games {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.bot-game-card {
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.bot-game-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: 250px;
+}
+
+.bot-game-header .game-icon {
+  font-size: 2rem;
+}
+
+.bot-game-header .game-name {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.difficulty-buttons {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.bot-form {
+  display: contents;
+}
+
+.difficulty-btn {
+  padding: 0.6rem 1.2rem;
+  border: 2px solid var(--border-color);
+  border-radius: 0.5rem;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.difficulty-btn:hover {
+  transform: translateY(-2px);
+}
+
+.difficulty-easy {
+  border-color: var(--success-color);
+}
+
+.difficulty-easy:hover {
+  background: rgba(34, 197, 94, 0.2);
+}
+
+.difficulty-medium {
+  border-color: var(--warning-color);
+}
+
+.difficulty-medium:hover {
+  background: rgba(245, 158, 11, 0.2);
+}
+
+.difficulty-hard {
+  border-color: var(--danger-color);
+}
+
+.difficulty-hard:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+.bot-badge {
+  background: rgba(99, 102, 241, 0.2);
+  color: var(--primary-color);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .lobby-header {
