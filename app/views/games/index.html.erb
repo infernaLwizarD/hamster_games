@@ -25,14 +25,20 @@
           <% @games.each do |game| %>
             <tr>
               <td><%= game.game_type_name %></td>
-              <td><%= game.opponent(current_player)&.username || "Ожидание" %></td>
+              <td>
+                <% if game.vs_bot? %>
+                  🤖 Бот <span class="bot-badge"><%= game.bot_difficulty_name %></span>
+                <% else %>
+                  <%= game.opponent(current_player)&.username || "Ожидание" %>
+                <% end %>
+              </td>
               <td>
                 <span class="status-badge status-<%= game.status %>">
-                  <% case game.status %>
-                  <% when 'waiting' %>Ожидание
-                  <% when 'playing' %>В процессе
-                  <% when 'finished' %>Завершена
-                  <% end %>
+                  <%= case game.status
+                      when 'waiting' then 'Ожидание'
+                      when 'playing' then 'В процессе'
+                      when 'finished' then 'Завершена'
+                      end %>
                 </span>
               </td>
               <td>
