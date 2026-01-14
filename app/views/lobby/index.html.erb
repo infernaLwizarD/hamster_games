@@ -20,18 +20,18 @@
             <%= f.hidden_field :game_type, value: game_type %>
             <button type="submit" class="game-type-card" data-game-type="<%= game_type %>">
               <span class="game-icon">
-                <% case game_type %>
-                <% when 'tic_tac_toe' %>❌⭕
-                <% when 'rpsls' %>✊✋✌️
-                <% when 'battleship' %>🚢💥
-                <% end %>
+                <%= case game_type
+                    when 'tic_tac_toe' then '❌⭕'
+                    when 'rpsls' then '✊✋✌️'
+                    when 'battleship' then '🚢💥'
+                    end %>
               </span>
               <span class="game-name">
-                <% case game_type %>
-                <% when 'tic_tac_toe' %>Крестики-нолики
-                <% when 'rpsls' %>Камень-ножницы-бумага-ящерица-Спок
-                <% when 'battleship' %>Морской бой
-                <% end %>
+                <%= case game_type
+                    when 'tic_tac_toe' then 'Крестики-нолики'
+                    when 'rpsls' then 'Камень-ножницы-бумага-ящерица-Спок'
+                    when 'battleship' then 'Морской бой'
+                    end %>
               </span>
             </button>
           <% end %>
