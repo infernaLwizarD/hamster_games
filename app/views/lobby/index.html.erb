@@ -16,7 +16,7 @@
       <h2>Создать игру</h2>
       <div class="game-type-cards">
         <% @game_types.each do |game_type| %>
-          <%= form_with url: games_path, local: true, class: "game-type-form" do |f| %>
+          <%= form_with model: Game.new, url: games_path, local: true, class: "game-type-form" do |f| %>
             <%= f.hidden_field :game_type, value: game_type %>
             <button type="submit" class="game-type-card" data-game-type="<%= game_type %>">
               <span class="game-icon">
