@@ -12,13 +12,13 @@
                 data-choice="<%= choice %>"
                 data-action="click->game#makeRpslsMove">
           <span class="choice-icon">
-            <% case choice %>
-            <% when 'rock' %>✊
-            <% when 'paper' %>✋
-            <% when 'scissors' %>✌️
-            <% when 'lizard' %>🦎
-            <% when 'spock' %>🖖
-            <% end %>
+            <%= case choice
+                when 'rock' then '✊'
+                when 'paper' then '✋'
+                when 'scissors' then '✌️'
+                when 'lizard' then '🦎'
+                when 'spock' then '🖖'
+                end %>
           </span>
           <span class="choice-name"><%= RpslsService::CHOICE_NAMES[choice] %></span>
         </button>
@@ -35,13 +35,13 @@
         <div class="choice-reveal">
           <span class="player-label"><%= game.player1.username %></span>
           <span class="choice-big">
-            <% case game.state['player1_choice'] %>
-            <% when 'rock' %>✊
-            <% when 'paper' %>✋
-            <% when 'scissors' %>✌️
-            <% when 'lizard' %>🦎
-            <% when 'spock' %>🖖
-            <% end %>
+            <%= case game.state['player1_choice']
+                when 'rock' then '✊'
+                when 'paper' then '✋'
+                when 'scissors' then '✌️'
+                when 'lizard' then '🦎'
+                when 'spock' then '🖖'
+                end %>
           </span>
           <span class="choice-name"><%= RpslsService::CHOICE_NAMES[game.state['player1_choice']] %></span>
         </div>
@@ -49,13 +49,13 @@
         <div class="choice-reveal">
           <span class="player-label"><%= game.player2.username %></span>
           <span class="choice-big">
-            <% case game.state['player2_choice'] %>
-            <% when 'rock' %>✊
-            <% when 'paper' %>✋
-            <% when 'scissors' %>✌️
-            <% when 'lizard' %>🦎
-            <% when 'spock' %>🖖
-            <% end %>
+            <%= case game.state['player2_choice']
+                when 'rock' then '✊'
+                when 'paper' then '✋'
+                when 'scissors' then '✌️'
+                when 'lizard' then '🦎'
+                when 'spock' then '🖖'
+                end %>
           </span>
           <span class="choice-name"><%= RpslsService::CHOICE_NAMES[game.state['player2_choice']] %></span>
         </div>
