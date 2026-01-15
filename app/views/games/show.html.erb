@@ -48,6 +48,8 @@
     <% elsif @game.finished? %>
       <% if @game.draw? %>
         <p class="status-draw">🤝 Ничья!</p>
+      <% elsif @game.bot_won? %>
+        <p class="status-loss">😔 Вы проиграли</p>
       <% elsif @game.winner == current_player %>
         <p class="status-win">🎉 Вы победили!</p>
       <% else %>

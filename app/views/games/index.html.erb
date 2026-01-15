@@ -45,6 +45,8 @@
                 <% if game.finished? %>
                   <% if game.draw? %>
                     <span class="result-draw">Ничья</span>
+                  <% elsif game.bot_won? %>
+                    <span class="result-loss">Поражение</span>
                   <% elsif game.winner == current_player %>
                     <span class="result-win">Победа</span>
                   <% else %>

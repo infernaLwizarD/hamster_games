@@ -53,7 +53,11 @@ class Game < ApplicationRecord
   end
 
   def draw?
-    finished? && winner_id.nil?
+    finished? && winner_id.nil? && !vs_bot?
+  end
+  
+  def bot_won?
+    finished? && winner_id.nil? && vs_bot?
   end
 
   def vs_bot?
