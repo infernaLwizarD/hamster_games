@@ -2,11 +2,11 @@ class RpslsService < GameService
   CHOICES = %w[rock paper scissors lizard spock].freeze
 
   WINS = {
-    'rock' => %w[scissors lizard],
-    'paper' => %w[rock spock],
-    'scissors' => %w[paper lizard],
-    'lizard' => %w[paper spock],
-    'spock' => %w[rock scissors]
+    'rock' => %w[scissors lizard],      # Камень затупляет Ножницы, давит Ящерицу
+    'paper' => %w[rock spock],          # Бумага заворачивает Камень, опровергает Спока
+    'scissors' => %w[paper lizard],     # Ножницы режут Бумагу, обезглавливают Ящерицу
+    'lizard' => %w[paper spock],        # Ящерица ест Бумагу, отравляет Спока
+    'spock' => %w[rock scissors]        # Спок испаряет Камень, ломает Ножницы
   }.freeze
 
   CHOICE_NAMES = {
@@ -61,12 +61,18 @@ class RpslsService < GameService
     p2_choice = state['player2_choice']
 
     if p1_choice == p2_choice
+      # Ничья - одинаковый выбор
       @game.finish_game!(nil)
     elsif WINS[p1_choice].include?(p2_choice)
+      # Игрок 1 победил
       @game.finish_game!(@game.player1)
-    else
+    elsif WINS[p2_choice].include?(p1_choice)
+      # Игрок 2 (или бот) победил
       winner = @game.vs_bot? ? nil : @game.player2
       @game.finish_game!(winner)
+    else
+      # Не должно происходить, но на всякий случай
+      @game.finish_game!(nil)
     end
   end
 end
