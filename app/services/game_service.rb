@@ -35,7 +35,11 @@ class GameService
   end
 
   def switch_turn
-    next_player = @game.current_turn == @game.player1 ? @game.player2 : @game.player1
+    if @game.vs_bot?
+      next_player = @game.player1
+    else
+      next_player = @game.current_turn == @game.player1 ? @game.player2 : @game.player1
+    end
     @game.update!(current_turn: next_player)
   end
 end

@@ -26,13 +26,13 @@ class TicTacToeService < GameService
     player_name = bot ? 'Бот' : player.username
     move = create_move(player, move_data, "#{player_name} поставил #{symbol} на позицию #{position + 1}")
 
-    winner = bot ? nil : player
     if winner?(board, symbol)
+      winner = bot ? nil : player
       @game.finish_game!(winner)
     elsif board_full?(board)
       @game.finish_game!(nil)
-    else
-      switch_turn unless bot
+    elsif !bot
+      switch_turn
     end
 
     { success: true, move: move }

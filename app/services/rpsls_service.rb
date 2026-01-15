@@ -65,7 +65,8 @@ class RpslsService < GameService
     elsif WINS[p1_choice].include?(p2_choice)
       @game.finish_game!(@game.player1)
     else
-      @game.finish_game!(@game.player2)
+      winner = @game.vs_bot? ? nil : @game.player2
+      @game.finish_game!(winner)
     end
   end
 end
