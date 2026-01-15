@@ -65,7 +65,18 @@ class BattleshipService < GameService
     return { success: false, error: 'Корабль выходит за пределы поля' } unless valid_positions?(positions)
 
     board = state["#{player_key}_board"]
+    ships = state["#{player_key}_ships"]
+    
+    # Удалить старую позицию корабля если он уже размещен (для перемещения)
+    if ships[ship_type]
+      ships[ship_type].each { |r, c| board[r][c] = nil }
+    end
+    
+    # Проверить что позиция не занята другими кораблями
     return { success: false, error: 'Позиция занята' } if positions.any? { |r, c| board[r][c] }
+    
+    # Проверить что корабли не примыкают друг к другу
+    return { success: false, error: 'Корабли не могут примыкать друг к другу' } if ships_adjacent?(positions, board)
 
     positions.each { |r, c| board[r][c] = ship_type }
     state["#{player_key}_ships"][ship_type] = positions
@@ -175,5 +186,26 @@ class BattleshipService < GameService
     state["#{player_key}_ships"].all? do |ship_type, positions|
       positions.all? { |r, c| shots[r][c] == 'hit' }
     end
+  end
+
+  def ships_adjacent?(positions, board)
+    positions.each do |row, col|
+      # Проверить все 8 направлений вокруг клетки
+      [-1, 0, 1].each do |dr|
+        [-1, 0, 1].each do |dc|
+          next if dr == 0 && dc == 0 # Пропустить саму клетку
+          
+          check_row = row + dr
+          check_col = col + dc
+          
+          # Проверить что клетка в пределах поля
+          next unless valid_position?(check_row, check_col)
+          
+          # Если в соседней клетке есть корабль - это нарушение
+          return true if board[check_row][check_col].present?
+        end
+      end
+    end
+    false
   end
 end

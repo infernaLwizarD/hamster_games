@@ -71,12 +71,35 @@ class BattleshipBotService < BotService
       end
 
       positions = calculate_positions(row, col, length, horizontal)
-      if positions.all? { |r, c| board[r][c].nil? }
-        return { row: row, col: col, horizontal: horizontal }
-      end
+      
+      # Проверить что позиция свободна
+      next unless positions.all? { |r, c| board[r][c].nil? }
+      
+      # Проверить что корабли не примыкают
+      next if ships_adjacent?(positions, board)
+      
+      return { row: row, col: col, horizontal: horizontal }
     end
 
     { row: 0, col: 0, horizontal: true }
+  end
+  
+  def ships_adjacent?(positions, board)
+    positions.each do |row, col|
+      [-1, 0, 1].each do |dr|
+        [-1, 0, 1].each do |dc|
+          next if dr == 0 && dc == 0
+          
+          check_row = row + dr
+          check_col = col + dc
+          
+          next unless check_row >= 0 && check_row < BOARD_SIZE && check_col >= 0 && check_col < BOARD_SIZE
+          
+          return true if board[check_row][check_col].present?
+        end
+      end
+    end
+    false
   end
 
   def calculate_positions(start_row, start_col, length, horizontal)

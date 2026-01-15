@@ -47,7 +47,7 @@
         </div>
         <div class="vs-big">VS</div>
         <div class="choice-reveal">
-          <span class="player-label"><%= game.player2.username %></span>
+          <span class="player-label"><%= game.vs_bot? ? 'Бот' : game.player2.username %></span>
           <span class="choice-big">
             <%= case game.state['player2_choice']
                 when 'rock' then '✊'
