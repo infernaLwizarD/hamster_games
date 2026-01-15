@@ -101,39 +101,69 @@ export default class extends Controller {
     await this.sendMove({ choice: choice })
   }
 
-  // Battleship
-  selectShip(event) {
-    this.selectedShip = event.currentTarget.dataset.shipType
-    this.selectedShipLength = parseInt(event.currentTarget.dataset.shipLength)
-    
-    document.querySelectorAll(".ship-btn").forEach(btn => btn.classList.remove("selected"))
-    event.currentTarget.classList.add("selected")
+  // Battleship - Drag and Drop
+  dragStart(event) {
+    const ship = event.currentTarget
+    this.draggedShip = {
+      type: ship.dataset.shipType,
+      length: parseInt(ship.dataset.shipLength),
+      horizontal: ship.dataset.horizontal === 'true',
+      element: ship
+    }
+    ship.classList.add('dragging')
   }
 
-  rotateShip() {
-    this.shipHorizontal = !this.shipHorizontal
-    const btn = event.currentTarget
-    btn.textContent = this.shipHorizontal ? "Повернуть (H)" : "Повернуть (V)"
+  dragEnd(event) {
+    event.currentTarget.classList.remove('dragging')
+    this.draggedShip = null
+  }
+
+  rotateShipDock(event) {
+    const ship = event.currentTarget
+    const isHorizontal = ship.dataset.horizontal === 'true'
+    ship.dataset.horizontal = (!isHorizontal).toString()
+    
+    const visual = ship.querySelector('.ship-visual')
+    visual.classList.toggle('vertical', !isHorizontal)
+    visual.classList.toggle('horizontal', isHorizontal)
   }
 
   async placeShipCell(event) {
-    if (!this.selectedShip) {
-      alert("Сначала выберите корабль")
+    event.preventDefault()
+    
+    if (!this.draggedShip) {
       return
     }
 
     const row = parseInt(event.currentTarget.dataset.row)
     const col = parseInt(event.currentTarget.dataset.col)
 
-    await this.sendMove({
+    const result = await this.sendMove({
       action: "place_ship",
-      ship_type: this.selectedShip,
+      ship_type: this.draggedShip.type,
       row: row,
       col: col,
-      horizontal: this.shipHorizontal
+      horizontal: this.draggedShip.horizontal
     })
 
-    this.selectedShip = null
+    // Mark ship as placed if successful
+    if (result && this.draggedShip.element) {
+      this.draggedShip.element.classList.add('placed')
+      this.draggedShip.element.draggable = false
+    }
+  }
+
+  allowDrop(event) {
+    event.preventDefault()
+    const cell = event.currentTarget
+    
+    if (this.draggedShip) {
+      cell.classList.add('drop-target')
+    }
+  }
+
+  removeDrop(event) {
+    event.currentTarget.classList.remove('drop-target')
   }
 
   async markReady() {
@@ -172,10 +202,13 @@ export default class extends Controller {
       if (!response.ok) {
         const data = await response.json()
         this.showError(data.error || "Ошибка при выполнении хода")
+        return false
       }
+      return true
     } catch (error) {
       console.error("Move error:", error)
       this.showError("Ошибка соединения")
+      return false
     }
   }
 }

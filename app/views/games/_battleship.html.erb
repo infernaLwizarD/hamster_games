@@ -11,30 +11,42 @@
     <div class="battleship-placement">
       <h3>Расстановка кораблей</h3>
       <% unless my_ready %>
-        <div class="ship-selector" data-game-target="shipSelector">
-          <p>Выберите корабль для размещения:</p>
-          <% BattleshipService::SHIPS.each do |ship_type, length| %>
-            <% placed = my_ships.key?(ship_type) %>
-            <% ship_name = case ship_type
-                           when 'battleship' then 'Линкор'
-                           when /cruiser/ then 'Крейсер'
-                           when /destroyer/ then 'Эсминец'
-                           when /submarine/ then 'Подлодка'
-                           else ship_type.capitalize
-                           end %>
-            <button class="ship-btn <%= 'placed' if placed %>" 
-                    data-ship-type="<%= ship_type %>" 
-                    data-ship-length="<%= length %>"
-                    data-action="click->game#selectShip">
-              <%= ship_name %> (<%= length %>)
-              <% if placed %>✓<% end %>
-            </button>
-          <% end %>
+        <div class="ships-dock" data-game-target="shipsDock">
+          <p class="dock-hint">Перетащите корабли на поле. Двойной клик - развернуть.</p>
+          <div class="dock-ships">
+            <% BattleshipService::SHIPS.each do |ship_type, length| %>
+              <% placed = my_ships.key?(ship_type) %>
+              <% ship_name = case ship_type
+                             when 'battleship' then 'Линкор'
+                             when /cruiser/ then 'Крейсер'
+                             when /destroyer/ then 'Эсминец'
+                             when /submarine/ then 'Подлодка'
+                             else ship_type.capitalize
+                             end %>
+              <div class="draggable-ship <%= 'placed' if placed %>" 
+                   data-ship-type="<%= ship_type %>" 
+                   data-ship-length="<%= length %>"
+                   data-horizontal="true"
+                   draggable="true"
+                   data-action="dragstart->game#dragStart dragend->game#dragEnd dblclick->game#rotateShipDock">
+                <div class="ship-info">
+                  <span class="ship-name"><%= ship_name %></span>
+                  <span class="ship-size">(<%= length %>)</span>
+                </div>
+                <div class="ship-visual" data-length="<%= length %>">
+                  <% length.times do %>
+                    <div class="ship-cell"></div>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+          </div>
         </div>
         <div class="placement-controls">
-          <button class="btn btn-outline" data-action="click->game#rotateShip">Повернуть (H/V)</button>
           <% if my_ships.keys.sort == BattleshipService::SHIPS.keys.sort %>
             <button class="btn btn-primary" data-action="click->game#markReady">Готов к бою!</button>
+          <% else %>
+            <p class="ships-remaining">Осталось разместить: <%= BattleshipService::SHIPS.size - my_ships.size %> кораблей</p>
           <% end %>
         </div>
       <% else %>
@@ -58,7 +70,7 @@
                 <div class="board-cell <%= 'has-ship' if cell %>" 
                      data-row="<%= row %>" 
                      data-col="<%= col %>"
-                     data-action="click->game#placeShipCell">
+                     data-action="drop->game#placeShipCell dragover->game#allowDrop dragleave->game#removeDrop">
                   <% if cell %><span class="ship-marker">🚢</span><% end %>
                 </div>
               <% end %>
