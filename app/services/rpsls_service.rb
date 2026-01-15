@@ -62,17 +62,20 @@ class RpslsService < GameService
 
     if p1_choice == p2_choice
       # Ничья - одинаковый выбор
-      @game.finish_game!(nil)
+      @game.finish_game!(nil, bot_won: false)
     elsif WINS[p1_choice].include?(p2_choice)
       # Игрок 1 победил
-      @game.finish_game!(@game.player1)
+      @game.finish_game!(@game.player1, bot_won: false)
     elsif WINS[p2_choice].include?(p1_choice)
       # Игрок 2 (или бот) победил
-      winner = @game.vs_bot? ? nil : @game.player2
-      @game.finish_game!(winner)
+      if @game.vs_bot?
+        @game.finish_game!(nil, bot_won: true)
+      else
+        @game.finish_game!(@game.player2, bot_won: false)
+      end
     else
       # Не должно происходить, но на всякий случай
-      @game.finish_game!(nil)
+      @game.finish_game!(nil, bot_won: false)
     end
   end
 end

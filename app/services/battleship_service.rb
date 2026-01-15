@@ -143,8 +143,11 @@ class BattleshipService < GameService
 
       if all_ships_destroyed?(state, opponent_key, shots)
         @game.update!(state: state)
-        winner = bot ? nil : player
-        @game.finish_game!(winner)
+        if bot
+          @game.finish_game!(nil, bot_won: true)
+        else
+          @game.finish_game!(player, bot_won: false)
+        end
         return { success: true, move: move }
       end
     end

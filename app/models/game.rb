@@ -78,7 +78,7 @@ class Game < ApplicationRecord
     )
   end
 
-  def finish_game!(winner_player = nil)
+  def finish_game!(winner_player = nil, bot_won: false)
     transaction do
       update!(
         status: 'finished',
@@ -90,7 +90,11 @@ class Game < ApplicationRecord
         winner_player.increment!(:wins_count)
         loser = opponent(winner_player)
         loser&.increment!(:losses_count)
+      elsif bot_won
+        # Бот победил - поражение для игрока
+        player1.increment!(:losses_count)
       else
+        # Ничья
         player1.increment!(:draws_count)
         player2&.increment!(:draws_count)
       end
