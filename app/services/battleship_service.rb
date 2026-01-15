@@ -1,11 +1,17 @@
 class BattleshipService < GameService
   BOARD_SIZE = 10
+  # Классические правила морского боя: 1x4, 2x3, 3x2, 4x1
   SHIPS = {
-    'carrier' => 5,
-    'battleship' => 4,
-    'cruiser' => 3,
-    'submarine' => 3,
-    'destroyer' => 2
+    'battleship' => 4,    # 1 четырёхпалубный
+    'cruiser1' => 3,      # 2 трёхпалубных
+    'cruiser2' => 3,
+    'destroyer1' => 2,    # 3 двухпалубных
+    'destroyer2' => 2,
+    'destroyer3' => 2,
+    'submarine1' => 1,    # 4 однопалубных
+    'submarine2' => 1,
+    'submarine3' => 1,
+    'submarine4' => 1
   }.freeze
 
   def initialize_game

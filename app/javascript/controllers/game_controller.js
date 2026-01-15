@@ -2,7 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 import consumer from "channels/consumer"
 
 export default class extends Controller {
-  static targets = ["board", "status", "moves", "ticTacToeBoard", "rpslsBoard", "battleshipBoard", "shipSelector"]
+  static targets = ["board", "status", "moves", "ticTacToeBoard", "rpslsBoard", "battleshipBoard", "shipSelector", "rulesModal"]
 
   connect() {
     this.gameId = this.element.dataset.gameId
@@ -13,6 +13,18 @@ export default class extends Controller {
     this.shipHorizontal = true
 
     this.subscribeToGame()
+  }
+
+  showRules() {
+    if (this.hasRulesModalTarget) {
+      this.rulesModalTarget.classList.add('active')
+    }
+  }
+
+  closeRules() {
+    if (this.hasRulesModalTarget) {
+      this.rulesModalTarget.classList.remove('active')
+    }
   }
 
   disconnect() {

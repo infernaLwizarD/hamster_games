@@ -15,12 +15,18 @@
           <p>Выберите корабль для размещения:</p>
           <% BattleshipService::SHIPS.each do |ship_type, length| %>
             <% placed = my_ships.key?(ship_type) %>
+            <% ship_name = case ship_type
+                           when 'battleship' then 'Линкор'
+                           when /cruiser/ then 'Крейсер'
+                           when /destroyer/ then 'Эсминец'
+                           when /submarine/ then 'Подлодка'
+                           else ship_type.capitalize
+                           end %>
             <button class="ship-btn <%= 'placed' if placed %>" 
                     data-ship-type="<%= ship_type %>" 
                     data-ship-length="<%= length %>"
-                    data-action="click->game#selectShip"
-                    <%= 'disabled' if placed %>>
-              <%= ship_type.capitalize %> (<%= length %> клеток)
+                    data-action="click->game#selectShip">
+              <%= ship_name %> (<%= length %>)
               <% if placed %>✓<% end %>
             </button>
           <% end %>
