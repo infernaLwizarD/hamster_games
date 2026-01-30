@@ -58,19 +58,10 @@ class GamesController < ApplicationController
     result = game_service.make_move(current_player, move_params.to_h)
 
     if result[:success]
-      GameChannel.broadcast_to(@game, {
-        type: 'move_made',
-        game: game_state(@game.reload),
-        move: move_info(result[:move])
-      })
+      @game.reload
+      broadcast_game_update(@game, result[:move])
 
-      if @game.finished?
-        GameChannel.broadcast_to(@game, {
-          type: 'game_finished',
-          game: game_state(@game),
-          winner_id: @game.winner_id
-        })
-      elsif @game.vs_bot? && @game.playing?
+      if @game.vs_bot? && @game.playing?
         make_bot_move(@game)
       end
 
@@ -115,19 +106,34 @@ class GamesController < ApplicationController
     result = game_service.make_move(nil, move_data, bot: true)
 
     if result[:success]
-      GameChannel.broadcast_to(game, {
-        type: 'move_made',
-        game: game_state(game.reload),
-        move: move_info(result[:move])
-      })
+      game.reload
+      broadcast_game_update(game, result[:move])
+    end
+  end
 
-      if game.finished?
-        GameChannel.broadcast_to(game, {
-          type: 'game_finished',
-          game: game_state(game),
-          winner_id: game.winner_id
-        })
-      end
+  def broadcast_game_update(game, move)
+    # Рендерим Turbo Stream для обновления игрового состояния
+    html = ApplicationController.render(
+      partial: 'games/game_update',
+      locals: { game: game, current_player: game.player1 }
+    )
+    
+    GameChannel.broadcast_to(game, {
+      type: 'turbo_stream',
+      html: html
+    })
+    
+    # Добавляем ход в историю
+    if move
+      move_html = ApplicationController.render(
+        partial: 'games/move_item',
+        locals: { move: move }
+      )
+      
+      GameChannel.broadcast_to(game, {
+        type: 'add_move',
+        html: move_html
+      })
     end
   end
 

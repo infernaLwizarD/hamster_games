@@ -11,7 +11,6 @@ export default class extends Controller {
     this.currentTurnId = parseInt(this.element.dataset.currentTurnId)
     this.selectedShip = null
     this.shipHorizontal = true
-    this.isReloading = false
 
     this.subscribeToGame()
   }
@@ -46,15 +45,13 @@ export default class extends Controller {
   handleMessage(data) {
     switch (data.type) {
       case "game_started":
-        this.refreshPage()
+        window.location.reload()
         break
-      case "move_made":
-        this.updateGame(data.game)
-        this.addMove(data.move)
+      case "turbo_stream":
+        this.handleTurboStream(data.html)
         break
-      case "game_finished":
-        this.updateGame(data.game)
-        this.showResult(data)
+      case "add_move":
+        this.addMove(data.html)
         break
       case "error":
         this.showError(data.message)
@@ -62,33 +59,31 @@ export default class extends Controller {
     }
   }
 
-  updateGame(gameState) {
-    this.currentTurnId = gameState.current_turn_id
-    this.refreshPage()
+  handleTurboStream(html) {
+    // Turbo автоматически обработает turbo-stream теги
+    Turbo.renderStreamMessage(html)
+    
+    // Обновляем currentTurnId из DOM
+    const statusEl = document.getElementById('game-status')
+    if (statusEl) {
+      const container = this.element
+      this.currentTurnId = parseInt(container.dataset.currentTurnId)
+    }
   }
 
-  addMove(move) {
+  addMove(html) {
     if (this.hasMovesTarget) {
       const list = this.movesTarget.querySelector(".moves-list")
       if (list) {
-        const li = document.createElement("li")
-        li.textContent = move.description
-        list.appendChild(li)
+        list.insertAdjacentHTML('beforeend', html)
+        // Прокрутить вниз к последнему ходу
+        list.scrollTop = list.scrollHeight
       }
     }
   }
 
-  showResult(data) {
-    setTimeout(() => this.refreshPage(), 500)
-  }
-
   showError(message) {
     alert(message)
-  }
-
-  refreshPage() {
-    this.isReloading = true
-    window.location.reload()
   }
 
   // Tic Tac Toe
@@ -208,10 +203,6 @@ export default class extends Controller {
       }
       return true
     } catch (error) {
-      // Игнорировать ошибки сети если страница перезагружается
-      if (this.isReloading) {
-        return false
-      }
       console.error("Move error:", error)
       this.showError("Ошибка соединения")
       return false

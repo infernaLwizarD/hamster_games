@@ -9,7 +9,7 @@
     </div>
   </header>
 
-  <div class="game-info-bar">
+  <div class="game-info-bar" id="game-info-bar">
     <div class="player-info player1 <%= 'current-turn' if @game.current_turn_id == @game.player1_id %>">
       <span class="player-symbol">
         <% if @game.game_type == 'tic_tac_toe' %>❌<% else %>🔵<% end %>
@@ -39,7 +39,7 @@
     </div>
   </div>
 
-  <div class="game-status" data-game-target="status">
+  <div class="game-status" id="game-status" data-game-target="status">
     <% if @game.waiting? %>
       <p class="status-waiting">⏳ Ожидание второго игрока...</p>
     <% elsif @game.playing? %>
@@ -71,7 +71,7 @@
     <% end %>
   </div>
 
-  <div class="game-board" data-game-target="board">
+  <div class="game-board" id="game-board" data-game-target="board">
     <% case @game.game_type %>
     <% when 'tic_tac_toe' %>
       <%= render 'games/tic_tac_toe', game: @game, current_player: current_player %>
