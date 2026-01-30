@@ -11,6 +11,7 @@ export default class extends Controller {
     this.currentTurnId = parseInt(this.element.dataset.currentTurnId)
     this.selectedShip = null
     this.shipHorizontal = true
+    this.isReloading = false
 
     this.subscribeToGame()
   }
@@ -86,6 +87,7 @@ export default class extends Controller {
   }
 
   refreshPage() {
+    this.isReloading = true
     window.location.reload()
   }
 
@@ -206,6 +208,10 @@ export default class extends Controller {
       }
       return true
     } catch (error) {
+      // Игнорировать ошибки сети если страница перезагружается
+      if (this.isReloading) {
+        return false
+      }
       console.error("Move error:", error)
       this.showError("Ошибка соединения")
       return false
