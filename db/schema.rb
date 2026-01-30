@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_15_000004) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_30_140012) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -20,7 +20,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_15_000004) do
     t.bigint "game_id", null: false
     t.jsonb "move_data", default: {}
     t.integer "move_number", null: false
-    t.bigint "player_id", null: false
+    t.bigint "player_id"
     t.datetime "updated_at", null: false
     t.index ["game_id", "move_number"], name: "index_game_moves_on_game_id_and_move_number"
     t.index ["game_id"], name: "index_game_moves_on_game_id"
@@ -33,6 +33,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_15_000004) do
     t.bigint "current_turn_id"
     t.datetime "finished_at"
     t.string "game_type", null: false
+    t.boolean "is_draw", default: false
     t.bigint "player1_id", null: false
     t.bigint "player2_id"
     t.datetime "started_at"

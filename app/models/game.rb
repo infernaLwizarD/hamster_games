@@ -53,11 +53,11 @@ class Game < ApplicationRecord
   end
 
   def draw?
-    finished? && winner_id.nil? && !vs_bot?
+    finished? && winner_id.nil? && (is_draw? || !vs_bot?)
   end
   
   def bot_won?
-    finished? && winner_id.nil? && vs_bot?
+    finished? && winner_id.nil? && vs_bot? && !is_draw?
   end
 
   def vs_bot?
@@ -87,7 +87,8 @@ class Game < ApplicationRecord
       update!(
         status: 'finished',
         finished_at: Time.current,
-        winner: winner_player
+        winner: winner_player,
+        is_draw: !winner_player && !bot_won
       )
 
       if winner_player
