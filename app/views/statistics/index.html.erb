@@ -9,38 +9,38 @@
   <div class="leaderboard">
     <table class="stats-table">
       <thead>
-        <tr>
-          <th>#</th>
-          <th>Игрок</th>
-          <th>Победы</th>
-          <th>Поражения</th>
-          <th>Ничьи</th>
-          <th>Всего игр</th>
-          <th>Винрейт</th>
-        </tr>
+      <tr>
+        <th>#</th>
+        <th>Игрок</th>
+        <th>Победы</th>
+        <th>Поражения</th>
+        <th>Ничьи</th>
+        <th>Всего игр</th>
+        <th>Винрейт</th>
+      </tr>
       </thead>
       <tbody>
-        <% @players.each_with_index do |player, index| %>
-          <tr class="<%= 'current-player' if player == current_player %>">
-            <td class="rank">
-              <% case index %>
-              <% when 0 %>🥇
-              <% when 1 %>🥈
-              <% when 2 %>🥉
+      <% @players.each_with_index do |player, index| %>
+        <tr class="<%= 'current-player' if player == current_player %>">
+          <td class="rank">
+            <% case index
+               when 0 %>🥇
+            <% when 1 %>🥈
+            <% when 2 %>🥉
               <% else %><%= index + 1 %>
-              <% end %>
-            </td>
-            <td>
-              <%= link_to player.username, player_statistics_path(player) %>
-              <% if player == current_player %><span class="you-badge">(Вы)</span><% end %>
-            </td>
-            <td class="wins"><%= player.wins_count %></td>
-            <td class="losses"><%= player.losses_count %></td>
-            <td class="draws"><%= player.draws_count %></td>
-            <td><%= player.total_games %></td>
-            <td class="winrate"><%= player.win_rate %>%</td>
-          </tr>
-        <% end %>
+            <% end %>
+          </td>
+          <td>
+            <%= link_to player.username, player_statistics_path(player) %>
+            <% if player == current_player %><span class="you-badge">(Вы)</span><% end %>
+          </td>
+          <td class="wins"><%= player.wins_count %></td>
+          <td class="losses"><%= player.losses_count %></td>
+          <td class="draws"><%= player.draws_count %></td>
+          <td><%= player.total_games %></td>
+          <td class="winrate"><%= player.win_rate %>%</td>
+        </tr>
+      <% end %>
       </tbody>
     </table>
   </div>

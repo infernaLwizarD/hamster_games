@@ -1,5 +1,6 @@
 class BattleshipService < GameService
   BOARD_SIZE = 10
+  COL_LABELS = %w[А Б В Г Д Е Ж З И К].freeze
   # Классические правила морского боя: 1x4, 2x3, 3x2, 4x1
   SHIPS = {
     'battleship' => 4,    # 1 четырёхпалубный
@@ -38,6 +39,14 @@ class BattleshipService < GameService
       mark_ready(player, bot: bot)
     when 'shoot'
       shoot(player, move_data, bot: bot)
+    when 'clear_board'
+      clear_board(player)
+    when 'random_place'
+      random_place(player)
+    when 'rotate_ship'
+      rotate_ship(player, move_data)
+    when 'remove_ship'
+      remove_ship(player, move_data)
     else
       { success: false, error: 'Неизвестное действие' }
     end
@@ -139,12 +148,14 @@ class BattleshipService < GameService
 
     player_name = bot ? 'Бот' : player.username
     result_text = hit ? 'попал' : 'промахнулся'
-    move = create_move(player, move_data, "#{player_name} #{result_text} по #{('A'.ord + col).chr}#{row + 1}")
+    move = create_move(player, move_data, "#{player_name} #{result_text} по #{COL_LABELS[col]}#{row + 1}")
 
     if hit
       ship_type = opponent_board[row][col]
       if ship_destroyed?(state, opponent_key, ship_type, shots)
-        move.update!(description: "#{player_name} потопил #{ship_type}!")
+        mark_surrounding_cells(state, opponent_key, player_key, ship_type)
+        ship_display = ship_display_name(ship_type)
+        move.update!(description: "#{player_name} потопил #{ship_display}!")
       end
 
       if all_ships_destroyed?(state, opponent_key, shots)
@@ -162,6 +173,139 @@ class BattleshipService < GameService
     switch_turn unless hit || bot
 
     { success: true, move: move }
+  end
+
+  def clear_board(player)
+    state = @game.state.dup
+    player_key = player == @game.player1 ? 'player1' : 'player2'
+
+    return { success: false, error: 'Вы уже готовы' } if state["#{player_key}_ready"]
+
+    state["#{player_key}_board"] = empty_board
+    state["#{player_key}_ships"] = {}
+    @game.update!(state: state)
+
+    { success: true, move: nil }
+  end
+
+  def random_place(player)
+    state = @game.state.dup
+    player_key = player == @game.player1 ? 'player1' : 'player2'
+
+    return { success: false, error: 'Вы уже готовы' } if state["#{player_key}_ready"]
+
+    board = empty_board
+    ships = {}
+
+    SHIPS.each do |ship_type, length|
+      placed = false
+      200.times do
+        horizontal = [true, false].sample
+        if horizontal
+          r = rand(BOARD_SIZE)
+          c = rand(BOARD_SIZE - length + 1)
+        else
+          r = rand(BOARD_SIZE - length + 1)
+          c = rand(BOARD_SIZE)
+        end
+
+        positions = calculate_positions(r, c, length, horizontal)
+        next unless positions.all? { |pr, pc| board[pr][pc].nil? }
+        next if ships_adjacent?(positions, board)
+
+        positions.each { |pr, pc| board[pr][pc] = ship_type }
+        ships[ship_type] = positions
+        placed = true
+        break
+      end
+
+      unless placed
+        return { success: false, error: 'Не удалось разместить корабли, попробуйте ещё раз' }
+      end
+    end
+
+    state["#{player_key}_board"] = board
+    state["#{player_key}_ships"] = ships
+    @game.update!(state: state)
+
+    { success: true, move: nil }
+  end
+
+  def rotate_ship(player, move_data)
+    state = @game.state.dup
+    player_key = player == @game.player1 ? 'player1' : 'player2'
+
+    return { success: false, error: 'Вы уже готовы' } if state["#{player_key}_ready"]
+
+    ship_type = move_data['ship_type']
+    ships = state["#{player_key}_ships"]
+    positions = ships[ship_type]
+    return { success: false, error: 'Корабль не найден' } unless positions&.any?
+
+    length = SHIPS[ship_type]
+    return { success: true, move: nil } if length == 1
+
+    board = state["#{player_key}_board"]
+
+    # Определяем текущую ориентацию
+    rows = positions.map(&:first).uniq
+    currently_horizontal = rows.size == 1
+
+    # Начальная точка — первая клетка корабля
+    start_row = positions.map(&:first).min
+    start_col = positions.map(&:last).min
+
+    # Новые позиции — меняем ориентацию
+    new_positions = calculate_positions(start_row, start_col, length, !currently_horizontal)
+
+    # Проверяем что новые позиции в пределах поля
+    return { success: false, error: 'Корабль выходит за пределы поля' } unless valid_positions?(new_positions)
+
+    # Убираем старый корабль с доски
+    positions.each { |r, c| board[r][c] = nil }
+
+    # Проверяем что новые позиции не заняты
+    if new_positions.any? { |r, c| board[r][c] }
+      positions.each { |r, c| board[r][c] = ship_type }
+      return { success: false, error: 'Позиция занята' }
+    end
+
+    # Проверяем соседство
+    if ships_adjacent?(new_positions, board)
+      positions.each { |r, c| board[r][c] = ship_type }
+      return { success: false, error: 'Корабли не могут примыкать друг к другу' }
+    end
+
+    # Размещаем корабль в новой ориентации
+    new_positions.each { |r, c| board[r][c] = ship_type }
+    ships[ship_type] = new_positions
+    state["#{player_key}_board"] = board
+    state["#{player_key}_ships"] = ships
+    @game.update!(state: state)
+
+    { success: true, move: nil }
+  end
+
+  def remove_ship(player, move_data)
+    state = @game.state.dup
+    player_key = player == @game.player1 ? 'player1' : 'player2'
+
+    return { success: false, error: 'Вы уже готовы' } if state["#{player_key}_ready"]
+
+    ship_type = move_data['ship_type']
+    ships = state["#{player_key}_ships"]
+    positions = ships[ship_type]
+    return { success: false, error: 'Корабль не найден' } unless positions&.any?
+
+    board = state["#{player_key}_board"]
+    positions.each { |r, c| board[r][c] = nil }
+    ships.delete(ship_type)
+
+    state["#{player_key}_board"] = board
+    state["#{player_key}_ships"] = ships
+    @game.update!(state: state)
+
+    { success: true, move: nil }
   end
 
   def calculate_positions(start_row, start_col, length, horizontal)
@@ -194,6 +338,34 @@ class BattleshipService < GameService
   def all_ships_destroyed?(state, player_key, shots)
     state["#{player_key}_ships"].all? do |ship_type, positions|
       positions.all? { |r, c| shots[r][c] == 'hit' }
+    end
+  end
+
+  def mark_surrounding_cells(state, opponent_key, player_key, ship_type)
+    positions = state["#{opponent_key}_ships"][ship_type]
+    return unless positions
+
+    shots = state["#{player_key}_shots"]
+    positions.each do |row, col|
+      [-1, 0, 1].each do |dr|
+        [-1, 0, 1].each do |dc|
+          next if dr == 0 && dc == 0
+          nr, nc = row + dr, col + dc
+          next unless valid_position?(nr, nc)
+          shots[nr][nc] = 'miss' if shots[nr][nc].nil?
+        end
+      end
+    end
+    state["#{player_key}_shots"] = shots
+  end
+
+  def ship_display_name(ship_type)
+    case ship_type
+    when 'battleship' then 'Линкор'
+    when /cruiser/ then 'Крейсер'
+    when /destroyer/ then 'Эсминец'
+    when /submarine/ then 'Подлодку'
+    else ship_type
     end
   end
 

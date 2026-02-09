@@ -42,7 +42,7 @@
         <% @moves.each do |move| %>
           <li class="move-item">
             <span class="move-number">#<%= move.move_number %></span>
-            <span class="move-player"><%= move.player.username %></span>
+            <span class="move-player"><%= move.player&.username %></span>
             <span class="move-description"><%= move.description %></span>
             <span class="move-time"><%= move.created_at.strftime("%H:%M:%S") %></span>
           </li>

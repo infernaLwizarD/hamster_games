@@ -1,142 +1,208 @@
-<div class="battleship-game" data-game-target="battleshipBoard">
-  <% player_key = current_player == game.player1 ? 'player1' : 'player2' %>
-  <% opponent_key = current_player == game.player1 ? 'player2' : 'player1' %>
-  <% phase = game.state['phase'] %>
-  <% my_ready = game.state["#{player_key}_ready"] %>
-  <% my_board = game.state["#{player_key}_board"] || [] %>
-  <% my_shots = game.state["#{player_key}_shots"] || [] %>
-  <% my_ships = game.state["#{player_key}_ships"] || {} %>
+<% player_key = current_player == game.player1 ? 'player1' : 'player2' %>
+<% opponent_key = current_player == game.player1 ? 'player2' : 'player1' %>
+<% phase = game.state['phase'] %>
+<% my_ready = game.state["#{player_key}_ready"] %>
+<% my_board = game.state["#{player_key}_board"] || [] %>
+<% my_shots = game.state["#{player_key}_shots"] || [] %>
+<% my_ships = game.state["#{player_key}_ships"] || {} %>
+<% col_labels = %w[А Б В Г Д Е Ж З И К] %>
+
+<% # Определяем потопленные корабли противника (для отображения на поле атаки) %>
+<% opponent_board = game.state["#{opponent_key}_board"] || [] %>
+<% opponent_ships = game.state["#{opponent_key}_ships"] || {} %>
+<% sunk_opponent_positions = Set.new %>
+<% opponent_ships.each do |st, positions| %>
+  <% if positions&.all? { |r, c| my_shots[r]&.at(c) == 'hit' } %>
+    <% positions.each { |r, c| sunk_opponent_positions.add([r, c]) } %>
+  <% end %>
+<% end %>
+
+<% # Определяем потопленные мои корабли (для отображения на моём поле) %>
+<% opponent_shots_data = game.state["#{opponent_key}_shots"] || [] %>
+<% my_ships_data = game.state["#{player_key}_ships"] || {} %>
+<% sunk_my_positions = Set.new %>
+<% my_ships_data.each do |st, positions| %>
+  <% if positions&.all? { |r, c| opponent_shots_data[r]&.at(c) == 'hit' } %>
+    <% positions.each { |r, c| sunk_my_positions.add([r, c]) } %>
+  <% end %>
+<% end %>
+
+<div class="bs-game" data-game-target="battleshipBoard"
+     data-ships="<%= BattleshipService::SHIPS.to_json %>"
+     data-placed-ships="<%= my_ships.to_json %>"
+     data-phase="<%= phase %>"
+     data-my-ready="<%= my_ready %>">
 
   <% if phase == 'placement' %>
-    <div class="battleship-placement">
-      <h3>Расстановка кораблей</h3>
+    <div class="bs-placement">
       <% unless my_ready %>
-        <div class="ships-dock" data-game-target="shipsDock">
-          <p class="dock-hint">Перетащите корабли на поле. Двойной клик - развернуть.</p>
-          <div class="dock-ships">
-            <% BattleshipService::SHIPS.each do |ship_type, length| %>
-              <% placed = my_ships.key?(ship_type) %>
-              <% ship_name = case ship_type
-                             when 'battleship' then 'Линкор'
-                             when /cruiser/ then 'Крейсер'
-                             when /destroyer/ then 'Эсминец'
-                             when /submarine/ then 'Подлодка'
-                             else ship_type.capitalize
-                             end %>
-              <div class="draggable-ship <%= 'placed' if placed %>" 
-                   data-ship-type="<%= ship_type %>" 
-                   data-ship-length="<%= length %>"
-                   data-horizontal="true"
-                   draggable="true"
-                   data-action="dragstart->game#dragStart dragend->game#dragEnd dblclick->game#rotateShipDock">
-                <div class="ship-info">
-                  <span class="ship-name"><%= ship_name %></span>
-                  <span class="ship-size">(<%= length %>)</span>
-                </div>
-                <div class="ship-visual" data-length="<%= length %>">
-                  <% length.times do %>
-                    <div class="ship-cell"></div>
+        <div class="bs-fleet-panel">
+          <div class="bs-fleet-title">Ваш флот</div>
+          <div class="bs-fleet-list" data-game-target="fleetList">
+            <% ship_groups = [
+              { name: 'Линкор', types: ['battleship'], size: 4 },
+              { name: 'Крейсер', types: ['cruiser1', 'cruiser2'], size: 3 },
+              { name: 'Эсминец', types: ['destroyer1', 'destroyer2', 'destroyer3'], size: 2 },
+              { name: 'Подлодка', types: ['submarine1', 'submarine2', 'submarine3', 'submarine4'], size: 1 }
+            ] %>
+            <% ship_groups.each do |group| %>
+              <div class="bs-fleet-group">
+                <span class="bs-fleet-group-name"><%= group[:name] %> (<%= group[:size] %>)</span>
+                <div class="bs-fleet-ships">
+                  <% group[:types].each do |ship_type| %>
+                    <% placed = my_ships.key?(ship_type) %>
+                    <button class="bs-fleet-ship <%= 'placed' if placed %>"
+                            data-ship-type="<%= ship_type %>"
+                            data-ship-length="<%= BattleshipService::SHIPS[ship_type] %>"
+                            draggable="<%= placed ? 'false' : 'true' %>"
+                            data-action="click->game#selectShip dragstart->game#fleetDragStart dragend->game#fleetDragEnd">
+                      <div class="bs-ship-cells">
+                        <% BattleshipService::SHIPS[ship_type].times do %>
+                          <div class="bs-ship-block"></div>
+                        <% end %>
+                      </div>
+                      <% if placed %><span class="bs-ship-check">&#10003;</span><% end %>
+                    </button>
                   <% end %>
                 </div>
               </div>
             <% end %>
           </div>
-        </div>
-        <div class="placement-controls">
-          <% if my_ships.keys.sort == BattleshipService::SHIPS.keys.sort %>
-            <button class="btn btn-primary" data-action="click->game#markReady">Готов к бою!</button>
-          <% else %>
-            <p class="ships-remaining">Осталось разместить: <%= BattleshipService::SHIPS.size - my_ships.size %> кораблей</p>
-          <% end %>
-        </div>
-      <% else %>
-        <p class="ready-status">✅ Вы готовы! Ожидание противника...</p>
-      <% end %>
-
-      <div class="my-board-container">
-        <h4>Ваше поле</h4>
-        <div class="battleship-board my-board">
-          <div class="board-header">
-            <div class="corner"></div>
-            <% ('A'..'J').each do |col| %>
-              <div class="col-label"><%= col %></div>
+          <div class="bs-placement-actions">
+            <button class="bs-btn bs-btn-random" data-action="click->game#randomPlace">Случайно</button>
+            <button class="bs-btn bs-btn-clear" data-action="click->game#clearBoard">Очистить</button>
+            <button class="bs-btn bs-btn-rotate" data-action="click->game#toggleOrientation" data-game-target="rotateBtn">Повернуть</button>
+          </div>
+          <div class="bs-placement-actions">
+            <% if my_ships.keys.sort == BattleshipService::SHIPS.keys.sort %>
+              <button class="bs-btn bs-btn-ready" data-action="click->game#markReady">Готов к бою!</button>
             <% end %>
           </div>
-          <% 10.times do |row| %>
-            <div class="board-row">
-              <div class="row-label"><%= row + 1 %></div>
-              <% 10.times do |col| %>
-                <% cell = my_board[row]&.at(col) %>
-                <div class="board-cell <%= 'has-ship' if cell %>" 
-                     data-row="<%= row %>" 
-                     data-col="<%= col %>"
-                     data-action="drop->game#placeShipCell dragover->game#allowDrop dragleave->game#removeDrop">
-                  <% if cell %><span class="ship-marker">🚢</span><% end %>
-                </div>
+        </div>
+      <% else %>
+        <div class="bs-ready-msg">Вы готовы! Ожидание противника...</div>
+      <% end %>
+
+      <div class="bs-boards">
+        <div class="bs-board-wrap">
+          <div class="bs-board-label">Ваше поле</div>
+          <table class="bs-board bs-my-board">
+            <thead>
+              <tr>
+                <th class="bs-corner"></th>
+                <% col_labels.each do |cl| %>
+                  <th class="bs-col-hdr"><%= cl %></th>
+                <% end %>
+              </tr>
+            </thead>
+            <tbody>
+              <% 10.times do |row| %>
+                <tr>
+                  <td class="bs-row-hdr"><%= row + 1 %></td>
+                  <% 10.times do |col| %>
+                    <% cell = my_board[row]&.at(col) %>
+                    <td class="bs-cell<%= ' bs-ship' if cell %><%= ' bs-placement-cell' unless my_ready %>"
+                        data-row="<%= row %>"
+                        data-col="<%= col %>"
+                        <% if cell && !my_ready %>
+                          data-ship-type="<%= cell %>"
+                          draggable="true"
+                        <% end %>
+                        <% unless my_ready %>
+                          data-action="click->game#placementClick dblclick->game#placementDblClick contextmenu->game#placementContext mouseenter->game#placementHover mouseleave->game#placementLeave dragstart->game#boardDragStart dragend->game#boardDragEnd dragover->game#cellDragOver dragenter->game#cellDragEnter dragleave->game#cellDragLeave drop->game#cellDrop"
+                        <% end %>
+                    ></td>
+                  <% end %>
+                </tr>
               <% end %>
-            </div>
-          <% end %>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
+
   <% elsif phase == 'battle' %>
-    <div class="battleship-battle">
-      <div class="boards-container">
-        <div class="board-section">
-          <h4>Ваше поле</h4>
-          <div class="battleship-board my-board">
-            <div class="board-header">
-              <div class="corner"></div>
-              <% ('A'..'J').each do |col| %>
-                <div class="col-label"><%= col %></div>
-              <% end %>
-            </div>
-            <% opponent_shots = game.state["#{opponent_key}_shots"] || [] %>
-            <% 10.times do |row| %>
-              <div class="board-row">
-                <div class="row-label"><%= row + 1 %></div>
-                <% 10.times do |col| %>
-                  <% cell = my_board[row]&.at(col) %>
-                  <% shot = opponent_shots[row]&.at(col) %>
-                  <div class="board-cell <%= 'has-ship' if cell %> <%= shot %>">
-                    <% if shot == 'hit' %>💥
-                    <% elsif shot == 'miss' %>💨
-                    <% elsif cell %>🚢
-                    <% end %>
-                  </div>
+    <div class="bs-battle">
+      <div class="bs-boards bs-boards-battle">
+        <div class="bs-board-wrap">
+          <div class="bs-board-label">Ваше поле</div>
+          <table class="bs-board bs-my-board">
+            <thead>
+              <tr>
+                <th class="bs-corner"></th>
+                <% col_labels.each do |cl| %>
+                  <th class="bs-col-hdr"><%= cl %></th>
                 <% end %>
-              </div>
-            <% end %>
-          </div>
+              </tr>
+            </thead>
+            <tbody>
+              <% 10.times do |row| %>
+                <tr>
+                  <td class="bs-row-hdr"><%= row + 1 %></td>
+                  <% 10.times do |col| %>
+                    <% cell = my_board[row]&.at(col) %>
+                    <% shot = opponent_shots_data[row]&.at(col) %>
+                    <% sunk = sunk_my_positions.include?([row, col]) %>
+                    <td class="bs-cell<%= ' bs-ship' if cell && shot != 'hit' %><%= ' bs-hit' if shot == 'hit' %><%= ' bs-miss' if shot == 'miss' && !cell %><%= ' bs-sunk' if sunk %>">
+                      <% if shot == 'hit' %>
+                        <span class="bs-mark-x"></span>
+                      <% elsif shot == 'miss' && !cell %>
+                        <span class="bs-mark-dot"></span>
+                      <% end %>
+                    </td>
+                  <% end %>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
         </div>
 
-        <div class="board-section">
-          <h4>Поле противника</h4>
-          <div class="battleship-board enemy-board">
-            <div class="board-header">
-              <div class="corner"></div>
-              <% ('A'..'J').each do |col| %>
-                <div class="col-label"><%= col %></div>
-              <% end %>
-            </div>
-            <% 10.times do |row| %>
-              <div class="board-row">
-                <div class="row-label"><%= row + 1 %></div>
-                <% 10.times do |col| %>
-                  <% shot = my_shots[row]&.at(col) %>
-                  <div class="board-cell <%= shot %> <%= 'clickable' if game.playing? && game.current_turn == current_player && !shot %>" 
-                       data-row="<%= row %>" 
-                       data-col="<%= col %>"
-                       data-action="click->game#shootCell">
-                    <% if shot == 'hit' %>💥
-                    <% elsif shot == 'miss' %>💨
-                    <% end %>
-                  </div>
+        <div class="bs-board-wrap">
+          <div class="bs-board-label">Поле противника</div>
+          <table class="bs-board bs-enemy-board">
+            <thead>
+              <tr>
+                <th class="bs-corner"></th>
+                <% col_labels.each do |cl| %>
+                  <th class="bs-col-hdr"><%= cl %></th>
                 <% end %>
-              </div>
-            <% end %>
-          </div>
+              </tr>
+            </thead>
+            <tbody>
+              <% 10.times do |row| %>
+                <tr>
+                  <td class="bs-row-hdr"><%= row + 1 %></td>
+                  <% 10.times do |col| %>
+                    <% shot = my_shots[row]&.at(col) %>
+                    <% sunk = sunk_opponent_positions.include?([row, col]) %>
+                    <% can_click = game.playing? && game.current_turn == current_player && !shot %>
+                    <td class="bs-cell<%= ' bs-hit' if shot == 'hit' %><%= ' bs-miss' if shot == 'miss' %><%= ' bs-sunk' if sunk %><%= ' bs-target' if can_click %>"
+                        data-row="<%= row %>"
+                        data-col="<%= col %>"
+                        <% if can_click %>
+                          data-action="click->game#shootCell"
+                        <% end %>
+                    >
+                      <% if sunk %>
+                        <span class="bs-mark-x"></span>
+                      <% elsif shot == 'hit' %>
+                        <span class="bs-mark-x"></span>
+                      <% elsif shot == 'miss' %>
+                        <span class="bs-mark-dot"></span>
+                      <% end %>
+                    </td>
+                  <% end %>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
         </div>
+      </div>
+
+      <div class="bs-ship-counter">
+        <% ships_alive = opponent_ships.count { |st, positions| !positions.all? { |r, c| my_shots[r]&.at(c) == 'hit' } } %>
+        <% ships_sunk = opponent_ships.size - ships_alive %>
+        <span class="bs-counter-label">Потоплено: <strong><%= ships_sunk %></strong> / <%= opponent_ships.size %></span>
       </div>
     </div>
   <% end %>
